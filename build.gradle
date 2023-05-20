@@ -1,0 +1,91 @@
+buildscript {
+    ext {
+        springBootVersion = '2.0.1.RELEASE'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath(
+          "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+
+plugins {
+   id 'org.springframework.boot' version '2.6.6'
+   id("io.spring.dependency-management") version "1.0.11.RELEASE"
+   	
+	id 'org.asciidoctor.convert' version '1.5.3'
+	id 'org.hidetake.swagger.generator' version '1.4.0'
+}
+
+
+
+group = "com.baeldung.ecommerce"
+version = "0.0.1-SNAPSHOT"
+//java.sourceCompatibility = JavaVersion.VERSION_11
+
+ext {
+
+	springFoxArtifacts = ["springfox-swagger2", "springfox-swagger-ui"]
+
+	springFoxVersion = "2.6.0"
+	swaggerCodeGenVersion = "2.2.1"
+}
+
+repositories {
+	maven { url = uri("https://repo.spring.io/release") }
+	mavenCentral()
+}
+
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'java'
+apply plugin: 'io.spring.dependency-management'
+
+
+springBoot {
+    mainClass = 'com.test.ecommerce.EcommerceApplication'
+}
+
+
+dependencies {
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    implementation('org.springframework.boot:spring-boot-starter-data-jpa')
+	//implementation group: 'org.hibernate', name: 'hibernate-entitymanager', version: '5.1.0.Final'
+    implementation 'javax.validation:validation-api:2.0.1.Final'
+    implementation('org.springframework.boot:spring-boot-starter-validation')
+    runtimeOnly('com.h2database:h2')
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+     testImplementation 'junit:junit:4.12'
+    implementation 'junit:junit:4.12'
+    
+    
+
+	springFoxArtifacts.each {
+		artifact -> implementation("io.springfox:$artifact:$springFoxVersion")
+	}
+
+	swaggerCodegen("io.swagger:swagger-codegen-cli:$swaggerCodeGenVersion")
+}
+
+task copySwaggerGeneratedCode(type: Copy) {
+	
+	from "${buildDir}/swagger-code"
+	into "${projectDir}"
+}
+
+generateSwaggerCode {
+
+	configFile = file('src/main/resources/swagger/config.json')
+	components = ['models', 'apis']
+	inputFile = file('src/main/resources/swagger/store-api.json')
+	language = 'spring'
+}
+
+generateSwaggerCode.finalizedBy(project.tasks.copySwaggerGeneratedCode)
+
+generateSwaggerDoc {
+	inputFile = file('src/main/resources/swagger/store-api.json')
+}
